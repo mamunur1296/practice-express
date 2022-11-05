@@ -78,6 +78,19 @@ const run = async () => {
       const rejult = await allPost.updateOne(quary, updateData, optins);
       res.send(rejult);
     });
+    app.patch("/updateStatus/:id", async (req, res) => {
+      const id = req.params.id;
+      const status = req.body.status;
+      console.log(id);
+      const quary = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: status,
+        },
+      };
+      const rejult = await allUserInfo.updateOne(quary, updatedDoc);
+      res.send(rejult);
+    });
     app.delete("/allpost/:id", async (req, res) => {
       const id = req.params.id;
       const quary = { _id: ObjectId(id) };
