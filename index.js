@@ -11,7 +11,7 @@ app.use(express.json());
 //bd conuction
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.qnvnenk.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
+
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -20,6 +20,7 @@ const client = new MongoClient(uri, {
 const run = async () => {
   try {
     const allPost = client.db("practice").collection("post");
+    const allUserInfo = client.db("practice").collection("userInfo");
     //dbpost
     app.get("/allpost", async (req, res) => {
       const quary = {};
@@ -30,6 +31,29 @@ const run = async () => {
     app.get("/update/:id", async (req, res) => {
       const { id } = req.params;
       const rejult = await allPost.findOne({ _id: ObjectId(id) });
+      res.send(rejult);
+    });
+    //check out by id
+    app.get("/checkoutbyid/:id", async (req, res) => {
+      const { id } = req.params;
+      const quary = { _id: ObjectId(id) };
+      const rejult = await allPost.findOne(quary);
+      res.send(rejult);
+    });
+    app.get("/orders", async (req, res) => {
+      let quary = {};
+      if (req.query.email) {
+        quary = {
+          email: req.query.email,
+        };
+      }
+      const cursur = allUserInfo.find(quary);
+      const rejult = await cursur.toArray();
+      res.send(rejult);
+    });
+    app.post("/checkoutUser", async (req, res) => {
+      const data = req.body;
+      const rejult = await allUserInfo.insertOne(data);
       res.send(rejult);
     });
     app.post("/allpost", async (req, res) => {
@@ -58,6 +82,12 @@ const run = async () => {
       const id = req.params.id;
       const quary = { _id: ObjectId(id) };
       const rejult = await allPost.deleteOne(quary);
+      res.send(rejult);
+    });
+    app.delete("/deleteCird/:id", async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: ObjectId(id) };
+      const rejult = await allUserInfo.deleteOne(quary);
       res.send(rejult);
     });
   } finally {
