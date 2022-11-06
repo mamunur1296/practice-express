@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -17,6 +18,21 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+//jwt issu
+const varifyJwt = (req, res, next) => {
+  const tokenInfo = req.headers.authorijation;
+  if (!tokenInfo) {
+    return res.status(401).send({ message: "unauthfffffffforijes" });
+  }
+  const token = tokenInfo.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+    if (error) {
+      return res.status(403).send({ message: "unauthorijes" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
 const run = async () => {
   try {
     const allPost = client.db("practice").collection("post");
@@ -46,7 +62,12 @@ const run = async () => {
       const rejult = await allPost.findOne(quary);
       res.send(rejult);
     });
-    app.get("/orders", async (req, res) => {
+    app.get("/orders", varifyJwt, async (req, res) => {
+      //jwt issu
+      const decoded = req.decoded.email;
+      if (decoded !== req.query.email) {
+        res.status(403).send({ message: "email paini" });
+      }
       let quary = {};
       if (req.query.email) {
         quary = {
@@ -56,6 +77,15 @@ const run = async () => {
       const cursur = allUserInfo.find(quary);
       const rejult = await cursur.toArray();
       res.send(rejult);
+    });
+    //jwt functions
+
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "2h",
+      });
+      res.send({ token });
     });
     app.post("/checkoutUser", async (req, res) => {
       const data = req.body;
